@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache updateCheck="false" monitoring="off" dynamicConfig="false" >
+
+	<cache name="sample-offheap-cache" 
+		maxBytesLocalHeap="1m" 
+		eternal="true" 
+		memoryStoreEvictionPolicy="LRU"
+		overflowToDisk="false"
+		diskPersistent="false"
+		overflowToOffHeap="true" 
+		maxMemoryOffHeap="1200m">
+	</cache>
+	
+</ehcache>
