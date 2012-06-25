@@ -45,7 +45,23 @@ public class StateCheckChannelHandler extends IdleStateAwareChannelHandler {
 			handleUpstream(ctx, new DefaultExceptionEvent(e.getChannel(), new SocketTimeoutException(
 					"force to close channel(" + ctx.getChannel().getRemoteAddress() + "), reason: time out.")));
 
-			e.getChannel().disconnect();
+			e.getChannel().close();
+			//
+			HsfChannel hsfChannel = hsfService.getChannels().get(e.getChannel().getId());
+			if (hsfChannel != null) {
+				HsfChannelGroup channelGroup = hsfChannel.getChannelGroup();
+				if (channelGroup != null) {
+					channelGroup.remove(hsfChannel);
+					//
+					synchronized (channelGroup) {
+						channelGroup = hsfService.getGroups().get(channelGroup.getName());
+						if (channelGroup != null && channelGroup.isEmpty()) {
+							hsfService.getEventDispatcher().dispatchGroupRemovedEvent(ctx, hsfChannel,
+									channelGroup.getName());
+						}
+					}
+				}
+			}
 		}
 		super.channelIdle(ctx, e);
 	}

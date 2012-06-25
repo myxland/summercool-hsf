@@ -97,7 +97,7 @@ public class DispatchUpStreamHandler extends SimpleChannelUpstreamHandler {
 		// 处理IOException，主动关闭channel
 		if (e.getCause() != null && e.getCause() instanceof IOException) {
 			e.getChannel().close();
-			closeChannel(ctx, new UpstreamChannelStateEvent(e.getChannel(), ChannelState.CONNECTED, false));
+			closeChannel(ctx, new UpstreamChannelStateEvent(e.getChannel(), ChannelState.CONNECTED, null));
 		}
 	}
 }

@@ -216,7 +216,7 @@ public class EventDispatcher {
 		}
 	}
 
-	private void dispatchGroupRemovedEvent(final ChannelHandlerContext ctx, final HsfChannel channel,
+	public void dispatchGroupRemovedEvent(final ChannelHandlerContext ctx, final HsfChannel channel,
 			final String groupName) {
 		try {
 			logger.warn("group {} is removed.", groupName);
