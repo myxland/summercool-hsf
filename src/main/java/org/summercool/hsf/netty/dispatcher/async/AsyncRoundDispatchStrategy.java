@@ -10,7 +10,6 @@ import org.summercool.hsf.util.AsyncCallback;
 import org.summercool.hsf.util.AsyncType;
 import org.summercool.hsf.util.ConcurrentArrayListHashMap;
 import org.summercool.hsf.util.HsfContextHolder;
-import org.summercool.hsf.util.RandomUtil;
 import org.summercool.hsf.util.StackTraceUtil;
 
 /**
@@ -23,11 +22,12 @@ import org.summercool.hsf.util.StackTraceUtil;
  */
 public class AsyncRoundDispatchStrategy extends AsyncAbstractDispatchStrategy {
 
+	private static final AtomicLong STATIC_SEQ = new AtomicLong(0);
 	private AtomicLong groupIndex;
 
 	public AsyncRoundDispatchStrategy(HsfService service) {
 		super(service);
-		groupIndex = new AtomicLong(RandomUtil.nextInt(Math.max(1, service.getGroups().size())));
+		groupIndex = new AtomicLong(STATIC_SEQ.getAndIncrement());
 	}
 
 	@Override
