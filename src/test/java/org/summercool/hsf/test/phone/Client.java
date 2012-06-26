@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class Client {
 	public static void main(String[] args) throws Exception {
 		final PhoneConnector connector = new PhoneConnector();
-		connector.connect("192.168.11.3", 8088);
+		connector.connect("127.0.0.1", 8088);
 		//
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
 			@Override
