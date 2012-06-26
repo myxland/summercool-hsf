@@ -182,10 +182,8 @@ public class ServiceMessageEventListener implements MessageEventListener {
 		AsyncCallback callback = channel.getCallbacks().remove(response.getSeq());
 		if (callback != null) {
 			//
-			Object data = channel.getCallbackDataMap().remove(response.getSeq());
 			Object param = channel.getCallbackParamMap().remove(response.getSeq());
 			try {
-				CallbackRegister.setCallbackData(data);
 				CallbackRegister.setCallbackParam(param);
 				//
 				if (response.getCause() != null) {
@@ -199,7 +197,6 @@ public class ServiceMessageEventListener implements MessageEventListener {
 				// 释放流量
 				flowRelease();
 				//
-				CallbackRegister.clearCallbackData();
 				CallbackRegister.clearCallbackParam();
 			}
 		}

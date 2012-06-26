@@ -19,24 +19,22 @@ public class Client {
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
 		HsfConnector connector = new HsfConnectorImpl();
 		// 打开异步Callback调用方式的消息参数保存开关(默认关闭)，打开后，在Callback的doCallback回调方法中可以获取到发送的消息内容
-		// connector.setOption(HsfOptions.HOLD_CALLBACK_PARAM, true);
+		connector.setOption(HsfOptions.HOLD_CALLBACK_PARAM, true);
 		//
 		connector.connect(new InetSocketAddress("192.168.1.52", 8082));
 
 		// 两种使用方式
 		test1(connector);
+		//
 		test2(connector);
 	}
 
-	// 每次调用使用同一个Callback
 	private static void test1(HsfConnector connector) {
 		final TestService testService = ServiceProxyFactory.getRoundFactoryInstance(connector).wrapAsyncCallbackProxy(
 				TestService.class, testAsyncCallback);
 
 		for (int i = 0; i < 10; i++) {
 			try {
-				// 此处注册数据，在回调方法可以获取到该数据
-				CallbackRegister.setCallbackData("test info" + i);
 				//
 				testService.test("Hello world");
 				// 注意，以上两个行为必须保证在同一个Thread中被执行，因为注册数据是通过ThreadLocal实现的
@@ -46,25 +44,20 @@ public class Client {
 		}
 	}
 
-	// 每次调用都创建一个新的Callback
 	private static void test2(HsfConnector connector) {
-		// 此处传入的callback为null
-		final TestService testService = ServiceProxyFactory.getRoundFactoryInstance(connector).wrapAsyncCallbackProxy(
-				TestService.class, null);
-
 		for (int i = 0; i < 10; i++) {
-			final String info = "test info" + i;
+			final int num = i;
 			try {
-				// 此处注册数据，在回调方法可以获取到该数据
-				CallbackRegister.setCallback(new AsyncCallback<String>() {
-					@Override
-					public void doCallback(String data) {
-						System.out.println("info:" + info);
-					}
-				});
+				final TestService testService = ServiceProxyFactory.getRoundFactoryInstance(connector)
+						.wrapAsyncCallbackProxy(TestService.class, new AsyncCallback<String>() {
+							@Override
+							public void doCallback(String data) {
+								System.out.println("num:" + num + " return " + data);
+							}
+						});
 				//
 				testService.test("Hello world");
-				// 注意，以上两个行为必须保证在同一个Thread中被执行，因为注册Callback是通过ThreadLocal实现的
+				// 注意，以上两个行为必须保证在同一个Thread中被执行，因为注册数据是通过ThreadLocal实现的
 			} catch (Exception e) {
 				System.err.println(StackTraceUtil.getStackTrace(e));
 			}
@@ -73,8 +66,7 @@ public class Client {
 
 	public static class TestAsyncCallback extends AsyncCallback<Object> {
 		public void doCallback(Object data) {
-			System.out.println("received " + data + " param:" + CallbackRegister.getCallbackParam());
-			System.out.println("info:" + CallbackRegister.getCallbackData());
+			System.out.println("received " + data + " sent msg:" + CallbackRegister.getCallbackParam());
 		}
 
 		@Override

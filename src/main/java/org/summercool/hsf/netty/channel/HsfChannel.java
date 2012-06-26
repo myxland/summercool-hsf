@@ -91,10 +91,6 @@ public class HsfChannel implements Channel {
 	 */
 	private ConcurrentHashMap<Long, AsyncCallback<?>> callbacks = new ConcurrentHashMap<Long, AsyncCallback<?>>();
 	/**
-	 * @Fields msgs : 存储通道上所有Callback调用保存的消息
-	 */
-	private ConcurrentHashMap<Long, Object> cbDataMap = new ConcurrentHashMap<Long, Object>();
-	/**
 	 * @Fields msgs : 存储通道上所有Callback调用保存的参数
 	 */
 	private ConcurrentHashMap<Long, Object> cbParamMap = new ConcurrentHashMap<Long, Object>();
@@ -231,27 +227,19 @@ public class HsfChannel implements Channel {
 		final long seq = getSeq();
 		request.setSeq(seq);
 		request.setTarget(msg);
-		//
-		final AsyncCallback<?> cb = getCallback(callback);
 
-		if (cb != null) {
+		//
+		if (callback != null) {
 			// 流量控制
 			flowAcquire();
 
 			try {
 
 				// 存储callback
-				callbacks.put(seq, cb);
-
-				Object cbData = CallbackRegister.getCallbackData();
-				if (cbData != null) {
-					// clear msg ref
-					CallbackRegister.clearCallbackData();
-					cbDataMap.put(seq, cbData);
-				}
+				callbacks.put(seq, callback);
 
 				//
-				final Object param = getCallbackMessage(msg);
+				Object param = getCallbackMessage(msg);
 				if (param != null && LangUtil.parseBoolean(service.getOption(HsfOptions.HOLD_CALLBACK_PARAM), false)) {
 					// 存储参数
 					cbParamMap.put(seq, param);
@@ -263,17 +251,16 @@ public class HsfChannel implements Channel {
 					public void operationComplete(ChannelFuture future) throws Exception {
 						if (!future.isSuccess()) {
 							callbacks.remove(seq);
-							cbDataMap.remove(seq);
 							//
-							Object m = cbDataMap.remove(seq);
+							Object m = cbParamMap.remove(seq);
 							try {
-								CallbackRegister.setCallbackData(m);
+								CallbackRegister.setCallbackParam(m);
 								//
-								cb.doExceptionCaught(future.getCause(), HsfChannel.this, param);
+								callback.doExceptionCaught(future.getCause(), HsfChannel.this, m);
 							} catch (Exception e) {
 								logger.error(StackTraceUtil.getStackTrace(e));
 							} finally {
-								CallbackRegister.clearCallbackData();
+								CallbackRegister.clearCallbackParam();
 							}
 						}
 					}
@@ -288,16 +275,6 @@ public class HsfChannel implements Channel {
 			//
 			write(msg);
 		}
-	}
-
-	private AsyncCallback<?> getCallback(AsyncCallback<?> callback) {
-		AsyncCallback<?> cb = CallbackRegister.getCallback();
-		if (cb != null) {
-			// remove callback ref
-			CallbackRegister.clearCallback();
-			return cb;
-		}
-		return callback;
 	}
 
 	public Object writeSync(Object msg) {
@@ -385,10 +362,6 @@ public class HsfChannel implements Channel {
 
 	public ConcurrentHashMap<Long, AsyncCallback<?>> getCallbacks() {
 		return callbacks;
-	}
-
-	public ConcurrentHashMap<Long, Object> getCallbackDataMap() {
-		return cbDataMap;
 	}
 
 	public ConcurrentHashMap<Long, Object> getCallbackParamMap() {
@@ -623,7 +596,16 @@ public class HsfChannel implements Channel {
 		//
 		for (Map.Entry<Long, AsyncCallback<?>> entry : callbacks.entrySet()) {
 			AsyncCallback<?> callback = entry.getValue();
-			callback.doExceptionCaught(new ClosedChannelException(), this, cbDataMap.get(entry.getKey()));
+			try {
+				Object param = cbParamMap.remove(entry.getKey());
+				CallbackRegister.setCallbackParam(param);
+				//
+				callback.doExceptionCaught(new ClosedChannelException(), this, param);
+			} catch (Exception e) {
+				logger.error(StackTraceUtil.getStackTrace(e));
+			} finally {
+				CallbackRegister.clearCallbackParam();
+			}
 		}
 
 		return channelFuture;
