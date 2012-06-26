@@ -134,7 +134,7 @@ class NumberStatisticUtil {
 	private static class StatisticHandler {
 		private static final long DEFAULT_INTERVAL = 60 * 1000;
 		private long interval = DEFAULT_INTERVAL;
-		private long correntOffset = 1000;
+		private long currentOffset = 1000;
 
 		private AtomicLong preValue = new AtomicLong();
 		private AtomicLong value = new AtomicLong();
@@ -150,7 +150,7 @@ class NumberStatisticUtil {
 		public StatisticHandler(String name, long interval) {
 			this.name = name;
 			this.interval = interval;
-			this.correntOffset = (long) (Double.valueOf(interval) / DEFAULT_INTERVAL * 1000);
+			this.currentOffset = (long) (Double.valueOf(interval) / DEFAULT_INTERVAL * 1000);
 		}
 
 		public long getPreValue() {
@@ -195,11 +195,11 @@ class NumberStatisticUtil {
 				time = now;
 			}
 			long offset = Math.abs(now - time);
-			if (offset >= interval - correntOffset) {
+			if (offset >= interval - currentOffset) {
 				// 此处加锁后，重新做判断，以避免并发调用
 				synchronized (this) {
 					offset = Math.abs(now - time);
-					if (offset < interval - correntOffset) {
+					if (offset < interval - currentOffset) {
 						return false;
 					}
 					//
