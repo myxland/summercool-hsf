@@ -27,7 +27,7 @@ import org.summercool.hsf.serializer.Serializer;
  */
 public class PhoneConnector {
 	public static final Serializer SERIALIZER = new CustomSerializer();
-	private final ByteBuffer receivedBuffer = ByteBuffer.allocate(1024);
+	private ByteBuffer receivedBuffer = ByteBuffer.allocate(10);
 	private final String groupName = "java nio client test";
 	//
 	private Selector selector;
@@ -52,7 +52,6 @@ public class PhoneConnector {
 		new Thread(new NioWorker()).start();
 
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
-
 			@Override
 			public void run() {
 				try {
@@ -85,6 +84,8 @@ public class PhoneConnector {
 			receivedBuffer.mark();
 			int length = receivedBuffer.getInt();
 			//
+			checkBuffer(length);
+			//
 			if (receivedBuffer.remaining() < length) {
 				receivedBuffer.reset();
 				return;
@@ -115,6 +116,17 @@ public class PhoneConnector {
 			}
 		}
 		receivedBuffer.compact();
+	}
+
+	private void checkBuffer(int length) {
+		if (receivedBuffer.capacity() < length) {
+			synchronized (receivedBuffer) {
+				ByteBuffer temp = receivedBuffer;
+				receivedBuffer = ByteBuffer.allocate(temp.remaining() + length);
+				receivedBuffer.put(temp);
+				receivedBuffer.flip();
+			}
+		}
 	}
 
 	/**
