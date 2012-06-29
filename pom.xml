@@ -72,12 +72,6 @@
 			<groupId>org.jboss.netty</groupId>
 			<artifactId>netty</artifactId>
 			<version>3.2.6.Final</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.googlecode</groupId>
-			<artifactId>kryo</artifactId>
-			<version>1.04</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-lang</groupId>
