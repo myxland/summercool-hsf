@@ -15,5 +15,6 @@
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/kryo-2.16-all.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
