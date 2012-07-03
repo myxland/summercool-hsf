@@ -1,6 +1,7 @@
 package org.summercool.hsf.util;
 
 import java.io.UnsupportedEncodingException;
+import java.util.UUID;
 
 /**
  * @Title: ShortUrlUtils.java
@@ -40,13 +41,30 @@ public class ShortUrlUtils {
 	}
 
 	public static void main(String[] args) throws UnsupportedEncodingException {
+		
+		UUID uuid = UUID.randomUUID();
+		
+		System.out.println(uuid.toString());
+		System.out.println(uuid.toString().replaceAll("-", ""));
+		
+		long most = Math.abs(uuid.getMostSignificantBits());
+		long least = Math.abs(uuid.getLeastSignificantBits());
+		System.out.println(encoding(most) + encoding(least));
+		
+		long time=20120702;
+		long timeH = 2012070214;
+		System.out.println(encoding(time));
+		System.out.println(encoding(timeH));
+		
+		System.out.println(decoding("SJQM1"));
+		System.out.println(decoding("ONRAC2"));
 
 //		System.out.println(UUID.randomUUID().toString());
-		
-		long id = 90000000000L;
-		
-		System.out.println(encoding(id));
-		System.out.println(decoding("T9C4"));
+//		
+//		long id = 90000000000L;
+//		
+//		System.out.println(encoding(id));
+//		System.out.println(decoding("T9C4"));
 		
 //		for (int j = 0; j < 10000; j++) {
 //			new Thread() {
