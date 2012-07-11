@@ -1,6 +1,7 @@
 package org.summercool.hsf.serializer;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -10,6 +11,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Kryo.RegisteredClass;
 import com.esotericsoftware.kryo.ObjectBuffer;
 import com.esotericsoftware.kryo.serialize.BigDecimalSerializer;
+import com.esotericsoftware.kryo.serialize.BigIntegerSerializer;
 import com.esotericsoftware.kryo.serialize.DateSerializer;
 
 /**
@@ -38,6 +40,7 @@ public class KryoSerializer implements Serializer {
 	public KryoSerializer() {
 		this.kryo = new Kryo();
 		kryo.register(BigDecimal.class, new BigDecimalSerializer());
+		kryo.register(BigInteger.class, new BigIntegerSerializer());
 		kryo.register(Date.class, new DateSerializer());
 		kryo.setRegistrationOptional(true);
 	}

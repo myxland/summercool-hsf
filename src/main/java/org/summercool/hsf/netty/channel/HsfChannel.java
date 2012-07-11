@@ -1,4 +1,4 @@
-package org.summercool.hsf.netty.channel;
+﻿package org.summercool.hsf.netty.channel;
 
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
@@ -98,6 +98,10 @@ public class HsfChannel implements Channel {
 	 * @Fields handshakeTimeout : 握手超时任务
 	 */
 	private volatile Timeout handshakeTimeout;
+	/**
+	 * 等待Response的消息数
+	 */
+	private AtomicLong waitingResponseNum = new AtomicLong();
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 	private volatile boolean needLock = true;
@@ -108,8 +112,9 @@ public class HsfChannel implements Channel {
 		public void operationComplete(ChannelFuture future) throws Exception {
 			//
 			if (future.isSuccess()) {
+				boolean lock = needLock;
 				try {
-					if (needLock) {
+					if (lock) {
 						statisticLock.lock();
 					}
 					//
@@ -121,7 +126,7 @@ public class HsfChannel implements Channel {
 						channelGroup.getMsgStatistic().setLastestSent(now);
 					}
 				} finally {
-					if (needLock) {
+					if (lock) {
 						statisticLock.unlock();
 					}
 				}
@@ -133,8 +138,9 @@ public class HsfChannel implements Channel {
 		public void operationComplete(ChannelFuture future) throws Exception {
 			//
 			if (future.isSuccess()) {
+				boolean lock = needLock;
 				try {
-					if (needLock) {
+					if (lock) {
 						statisticLock.lock();
 					}
 					//
@@ -147,7 +153,7 @@ public class HsfChannel implements Channel {
 						channelGroup.getHeartBeatStatistic().setLastestSent(now);
 					}
 				} finally {
-					if (needLock) {
+					if (lock) {
 						statisticLock.unlock();
 					}
 				}
@@ -206,6 +212,9 @@ public class HsfChannel implements Channel {
 				public void operationComplete(ChannelFuture future) throws Exception {
 					//
 					if (!future.isSuccess()) {
+						// 释放流量
+						flowRelease();
+						//
 						futures.remove(seq);
 						invokeFuture.setCause(future.getCause());
 					}
@@ -232,7 +241,6 @@ public class HsfChannel implements Channel {
 		if (callback != null) {
 			// 流量控制
 			flowAcquire();
-
 			try {
 
 				// 存储callback
@@ -305,6 +313,8 @@ public class HsfChannel implements Channel {
 				throw new HsfFlowExceededException("flow exceeded");
 			}
 		}
+		//
+		incrWaitingResponseNum();
 	}
 
 	private void flowRelease() {
@@ -313,6 +323,8 @@ public class HsfChannel implements Channel {
 		if (flowManager != null) {
 			flowManager.release();
 		}
+		//
+		decrWaitingResponseNum();
 	}
 
 	private void statsServiceInitiativeInvoke(Object msg) {
@@ -625,6 +637,18 @@ public class HsfChannel implements Channel {
 
 	public void setChannelGroupFuture(ChannelGroupFuture channelGroupFuture) {
 		this.channelGroupFuture = channelGroupFuture;
+	}
+
+	public long getWaitingResponseNum() {
+		return waitingResponseNum.get();
+	}
+
+	public long incrWaitingResponseNum() {
+		return waitingResponseNum.incrementAndGet();
+	}
+
+	public long decrWaitingResponseNum() {
+		return waitingResponseNum.decrementAndGet();
 	}
 
 	@Override

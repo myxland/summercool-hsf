@@ -1,4 +1,4 @@
-package org.summercool.hsf.netty.event;
+﻿package org.summercool.hsf.netty.event;
 
 import java.util.EventListener;
 import java.util.List;
@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.summercool.hsf.exception.HsfInterceptedException;
 import org.summercool.hsf.exception.HsfRemoteServiceException;
 import org.summercool.hsf.future.ChannelGroupFuture;
+import org.summercool.hsf.netty.channel.FlowManager;
 import org.summercool.hsf.netty.channel.HsfChannel;
 import org.summercool.hsf.netty.channel.HsfChannelGroup;
 import org.summercool.hsf.netty.interceptor.PreDispatchInterceptor;
@@ -264,6 +265,8 @@ public class EventDispatcher {
 					HsfContextHolder.setHsfService(channel.getService());
 					HsfContextHolder.setRemoteGroupName(channel.getChannelGroup() != null ? channel.getChannelGroup()
 							.getName() : null);
+					// 恢复流量
+					restoreFlow(channel);
 					//
 					for (EventListener listener : service.getListeners()) {
 						if (listener instanceof ChannelEventListener) {
@@ -306,6 +309,14 @@ public class EventDispatcher {
 					HsfContextHolder.setChannel(null);
 					HsfContextHolder.setHsfService(null);
 					HsfContextHolder.setRemoteGroupName(null);
+				}
+			}
+
+			// 恢复流量
+			private void restoreFlow(HsfChannel channel) {
+				FlowManager flowManager = service.getFlowManager();
+				if (flowManager != null) {
+					flowManager.release((int) channel.getWaitingResponseNum());
 				}
 			}
 		});

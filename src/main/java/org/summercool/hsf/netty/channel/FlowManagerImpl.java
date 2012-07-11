@@ -2,12 +2,10 @@ package org.summercool.hsf.netty.channel;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class FlowManagerImpl implements FlowManager {
 	private int threshold = 2000000;
 	private Semaphore available = new Semaphore(threshold, false);
-	private ReentrantLock lock = new ReentrantLock();
 
 	@Override
 	public void acquire() throws InterruptedException {
@@ -30,17 +28,12 @@ public class FlowManagerImpl implements FlowManager {
 
 	@Override
 	public void release() {
-		if (available.availablePermits() < threshold) {
-			try {
-				lock.lock();
+		release(1);
+	}
 
-				if (available.availablePermits() < threshold) {
-					available.release();
-				}
-			} finally {
-				lock.unlock();
-			}
-		}
+	@Override
+	public void release(int permits) {
+		available.release(permits);
 	}
 
 	@Override
@@ -54,24 +47,7 @@ public class FlowManagerImpl implements FlowManager {
 			throw new IllegalArgumentException("threshold must great than 0.");
 		}
 
-		try {
-			lock.lock();
-
-			if (newThreshold > threshold) {
-				int offset = newThreshold - threshold;
-				threshold = newThreshold;
-				available.release(offset);
-			} else {
-				int offset = threshold - newThreshold;
-				threshold = newThreshold;
-				try {
-					available.acquire(offset);
-				} catch (InterruptedException e) {
-				}
-			}
-		} finally {
-			lock.unlock();
-		}
+		available = new Semaphore(newThreshold, false);
 	}
 
 	@Override

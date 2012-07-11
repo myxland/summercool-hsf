@@ -1,4 +1,4 @@
-package org.summercool.hsf.netty.listener.impl;
+﻿package org.summercool.hsf.netty.listener.impl;
 
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.DefaultExceptionEvent;
@@ -175,7 +175,7 @@ public class ServiceMessageEventListener implements MessageEventListener {
 				future.setResult(response.getTarget());
 			}
 			// 释放流量
-			flowRelease();
+			flowRelease(channel);
 		}
 
 		// Callback方式
@@ -195,18 +195,20 @@ public class ServiceMessageEventListener implements MessageEventListener {
 				logger.error(StackTraceUtil.getStackTrace(ex));
 			} finally {
 				// 释放流量
-				flowRelease();
+				flowRelease(channel);
 				//
 				CallbackRegister.clearCallbackParam();
 			}
 		}
 	}
 
-	private void flowRelease() {
+	private void flowRelease(HsfChannel channel) {
 		// 流量控制
 		FlowManager flowManager = this.eventDispatcher.getService().getFlowManager();
 		if (flowManager != null) {
 			flowManager.release();
+			//
+			channel.decrWaitingResponseNum();
 		}
 	}
 }

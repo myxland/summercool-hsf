@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
@@ -61,8 +62,8 @@ public class HsfConnectorImpl extends AbstractHsfService implements HsfConnector
 	private ClientBootstrap bootstrap;
 	private HashedWheelTimer idleTimer = new HashedWheelTimer();
 	private ConnectorHandshakeProcessor handshakeProcessor;
-	private ScheduledExecutorService reconnectTimer = Executors.newScheduledThreadPool(1, new NamedThreadFactory(
-			"HsfReconnectScheduler", true));
+	private ScheduledExecutorService reconnectTimer = createReconnectScheduler();
+	private ScheduledFuture<?> reconnectScheduledFuture;
 	private ConnectManager connectManager = new ConnectManager();
 	private AtomicBoolean reconnecting;
 	private ReentrantLock reconnLock = new ReentrantLock();
@@ -211,16 +212,21 @@ public class HsfConnectorImpl extends AbstractHsfService implements HsfConnector
 	protected void startReconnect(boolean reset) {
 		if (reset) {
 			if (reconnectTimer != null) {
-				reconnectTimer.shutdown();
+				reconnectTimer.shutdownNow();
 			}
 			reconnectTimer = Executors.newScheduledThreadPool(1);
+
 			reconnecting.set(false);
 		}
 
 		final Integer reconnectInterval = LangUtil.parseInt(getOption(HsfOptions.RECONNECT_INTERVAL), 10000);
 		if (!reconnecting.get()) {
 			reconnecting.set(true);
-			reconnectTimer.scheduleAtFixedRate(new Runnable() {
+			if (reconnectScheduledFuture != null) {
+				reconnectScheduledFuture.cancel(true);
+			}
+			//
+			reconnectScheduledFuture = reconnectTimer.scheduleAtFixedRate(new Runnable() {
 
 				public void run() {
 					try {
@@ -269,15 +275,18 @@ public class HsfConnectorImpl extends AbstractHsfService implements HsfConnector
 		}
 	}
 
+	private ScheduledExecutorService createReconnectScheduler() {
+		return Executors.newScheduledThreadPool(1, new NamedThreadFactory("HsfReconnectScheduler", true));
+	}
+
 	@Override
 	public void setOption(String opName, Object opValue) {
 		super.setOption(opName, opValue);
 		if (HsfOptions.RECONNECT_INTERVAL.equals(opName)) {
+			//
 			Integer reconnectInterval = LangUtil.parseInt(opValue);
 			if (reconnectInterval == 0) {
-				if (reconnectTimer != null) {
-					reconnectTimer.shutdown();
-				}
+				stopReconnectScheduler();
 			} else if (reconnectInterval < 0) {
 				throw new IllegalAccessError("reconnectInterval must great than 0.");
 			} else {
@@ -286,13 +295,37 @@ public class HsfConnectorImpl extends AbstractHsfService implements HsfConnector
 		}
 	}
 
+	// 停止重连任务
+	private void stopReconnectScheduler() {
+		//
+		try {
+			if (reconnectScheduledFuture != null) {
+				reconnectScheduledFuture.cancel(true);
+			}
+		} catch (Exception e1) {
+		}
+		//
+		try {
+			if (reconnectTimer != null) {
+				reconnectTimer.shutdownNow();
+			}
+		} catch (Exception e) {
+		}
+	}
+
 	public void shutdown() {
 		super.shutdown();
+		//
+		try {
+			idleTimer.stop();
+		} catch (Exception e) {
+		}
+		//
+		stopReconnectScheduler();
+		//
 		if (bootstrap != null) {
 			bootstrap.releaseExternalResources();
 		}
-		idleTimer.stop();
-		reconnectTimer.shutdown();
 	}
 
 	public ConnectorHandshakeProcessor getHandshakeProcessor() {

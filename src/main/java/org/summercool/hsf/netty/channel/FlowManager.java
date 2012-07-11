@@ -1,4 +1,4 @@
-package org.summercool.hsf.netty.channel;
+﻿package org.summercool.hsf.netty.channel;
 
 /**
  * @ClassName: FlowManager
@@ -16,6 +16,8 @@ public interface FlowManager {
 	public abstract boolean acquire(int permits, int timeout);
 
 	public abstract void release();
+
+	public abstract void release(int permits);
 
 	public abstract int getAvailable();
 
