@@ -308,7 +308,7 @@ public class HsfChannel implements Channel {
 		// 流量控制
 		FlowManager flowManager = this.service.getFlowManager();
 		if (flowManager != null) {
-			int timeout = LangUtil.parseInt(this.service.getOption(HsfOptions.TIMEOUT_WHEN_FLOW_EXCEEDED), 3000);
+			int timeout = LangUtil.parseInt(this.service.getOption(HsfOptions.TIMEOUT_WHEN_FLOW_EXCEEDED), 0);
 			if (!flowManager.acquire(1, timeout)) {
 				throw new HsfFlowExceededException("flow exceeded");
 			}

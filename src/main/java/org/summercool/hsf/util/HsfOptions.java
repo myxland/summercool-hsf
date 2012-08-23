@@ -1,4 +1,4 @@
-package org.summercool.hsf.util;
+﻿package org.summercool.hsf.util;
 
 /**
  * @Title: HsfConstants.java
@@ -42,7 +42,7 @@ public class HsfOptions {
 	 */
 	public static final String FLOW_LIMIT = "flowLimit";
 	/**
-	 * 申请流量超时时间(毫秒), default is 3000
+	 * 申请流量超时时间(毫秒), default is 0
 	 */
 	public static final String TIMEOUT_WHEN_FLOW_EXCEEDED = "timeoutWhenFlowExceeded";
 	/**

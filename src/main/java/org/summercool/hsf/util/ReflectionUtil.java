@@ -1,4 +1,4 @@
-package org.summercool.hsf.util;
+﻿package org.summercool.hsf.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -39,34 +39,19 @@ public class ReflectionUtil {
 
 		// 获取参数类型
 		Class<?>[] parameterTypes;
-		boolean hasNull = false;
 		if (args == null || args.length == 0) {
 			parameterTypes = new Class[0];
 		} else {
 			parameterTypes = new Class[args.length];
 			for (int i = 0; i < args.length; i++) {
-				if (args[i] == null) {
-					hasNull = true;
-					break;
+				if (args[i] != null) {
+					parameterTypes[i] = args[i].getClass();
 				}
-				parameterTypes[i] = args[i].getClass();
 			}
 		}
 
 		try {
-			Method method = null;
-			if (hasNull) {
-				// 如果参数中包含null，则遍历方法组以查找匹配的Method
-				Method[] methods = object.getClass().getMethods();
-				for (Method md : methods) {
-					if (methodName.equals(md.getName()) && isMatch(args, md.getParameterTypes())) {
-						method = md;
-						break;
-					}
-				}
-			} else {
-				method = MethodUtils.getMatchingAccessibleMethod(object.getClass(), methodName, parameterTypes);
-			}
+			Method method = MethodUtils.getMatchingAccessibleMethod(object.getClass(), methodName, parameterTypes);
 
 			if (method == null) {
 				throw new NoSuchMethodException("class " + object.getClass() + " has no method with name " + methodName
@@ -154,8 +139,9 @@ public class ReflectionUtil {
 					return false;
 				}
 			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	/**

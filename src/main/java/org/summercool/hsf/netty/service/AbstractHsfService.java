@@ -1,4 +1,4 @@
-package org.summercool.hsf.netty.service;
+﻿package org.summercool.hsf.netty.service;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -161,7 +161,7 @@ public abstract class AbstractHsfService implements HsfService {
 		options.put(HsfOptions.CONNECT_TIMEOUT, 30000);
 		options.put(HsfOptions.HANDSHAKE_TIMEOUT, 30000);
 		options.put(HsfOptions.FLOW_LIMIT, 2000000);
-		options.put(HsfOptions.TIMEOUT_WHEN_FLOW_EXCEEDED, 3000);
+		options.put(HsfOptions.TIMEOUT_WHEN_FLOW_EXCEEDED, 0);
 		options.put(HsfOptions.MAX_THREAD_NUM_OF_DISPATCHER, 150);
 		options.put(HsfOptions.OPEN_SERVICE_INVOKE_STATISTIC, false);
 		options.put(HsfOptions.EVENT_EXECUTOR_QUEUE_CAPACITY, 1000000);
