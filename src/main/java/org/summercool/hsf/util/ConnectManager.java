@@ -1,8 +1,13 @@
-package org.summercool.hsf.util;
+﻿package org.summercool.hsf.util;
 
 import java.net.SocketAddress;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -16,7 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConnectManager {
 	private ConcurrentHashMap<SocketAddress, AtomicInteger> disconnAddressList = new ConcurrentHashMap<SocketAddress, AtomicInteger>();
 	private ConcurrentHashMap<SocketAddress, String> connectedAddressList = new ConcurrentHashMap<SocketAddress, String>();
-
+	private BlockingQueue<ConnectionInfo> reconnInfoQueue = new LinkedBlockingQueue<ConnectionInfo>(20);
+	
 	public Set<SocketAddress> getConnectedAddress() {
 		return connectedAddressList.keySet();
 	}
@@ -64,5 +70,39 @@ public class ConnectManager {
 			return 0;
 		}
 		return num.get();
+	}
+	public void logConnect(SocketAddress address) {
+		ConnectionInfo connInfo = new ConnectionInfo(address.toString());
+		while (!reconnInfoQueue.offer(connInfo)) {
+			reconnInfoQueue.poll();
+		}
+	}
+
+	public Queue<ConnectionInfo> getReconnectionInfoQueue() {
+		return reconnInfoQueue;
+	}
+
+	public static class ConnectionInfo {
+		private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+		private Date time;
+		private String address;
+
+		public ConnectionInfo(String address) {
+			this.address = address;
+			this.time = new Date();
+		}
+
+		public String getTime() {
+			return timeFormat.format(time);
+		}
+
+		public String getAddress() {
+			return address;
+		}
+
+		@Override
+		public String toString() {
+			return "[" + getTime() + "," + address + "]";
+		}
 	}
 }

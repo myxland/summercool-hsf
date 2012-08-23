@@ -1,4 +1,4 @@
-package org.summercool.hsf.netty.service;
+﻿package org.summercool.hsf.netty.service;
 
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -31,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.summercool.hsf.future.ChannelGroupFuture;
 import org.summercool.hsf.future.ChannelGroupFutureHolder;
+import org.summercool.hsf.jmx.management.annotation.Description;
+import org.summercool.hsf.jmx.management.annotation.ManagedAttribute;
 import org.summercool.hsf.netty.channel.HsfChannel;
 import org.summercool.hsf.netty.channel.HsfChannelGroup;
 import org.summercool.hsf.netty.channel.HsfNioClientSocketChannelFactory;
@@ -41,6 +44,7 @@ import org.summercool.hsf.netty.listener.ChannelEventListenerAdapter;
 import org.summercool.hsf.netty.listener.EventBehavior;
 import org.summercool.hsf.netty.listener.impl.ConnectorGroupMessageEventListener;
 import org.summercool.hsf.util.ConnectManager;
+import org.summercool.hsf.util.ConnectManager.ConnectionInfo;
 import org.summercool.hsf.util.HsfConstants;
 import org.summercool.hsf.util.HsfOptions;
 import org.summercool.hsf.util.LangUtil;
@@ -242,6 +246,7 @@ public class HsfConnectorImpl extends AbstractHsfService implements HsfConnector
 							for (int i = 0; i < num; i++) {
 								// 如果不包含，则重新建立连接
 								logger.warn("尝试重连到{}", socketAddress);
+								connectManager.logConnect(socketAddress);
 
 								ChannelFuture singleFuture = bootstrap.connect(socketAddress);
 								singleFuture.addListener(new ChannelFutureListener() {
@@ -346,6 +351,8 @@ public class HsfConnectorImpl extends AbstractHsfService implements HsfConnector
 		if ((addressArray == null || addressArray.length == 0) && !forceProcess) {
 			return;
 		}
+		//
+		logger.warn("refreshIPList forceProcess:{}, address:{}", forceProcess, addressArray);
 
 		List<SocketAddress> newAddresses = Arrays.asList(addressArray);
 		List<SocketAddress> addList = new ArrayList<SocketAddress>();
@@ -402,6 +409,46 @@ public class HsfConnectorImpl extends AbstractHsfService implements HsfConnector
 		}
 
 		group.close(true);
+	}
+
+	@ManagedAttribute
+	@Description("Returns the disconnected addresses.")
+	public Set<String> getDisconnectedAddresses() {
+		Set<String> set = new HashSet<String>();
+		Set<SocketAddress> disconnSet = connectManager.getDisconnectAddress();
+		if (disconnSet != null) {
+			for (SocketAddress add : disconnSet) {
+				set.add(add.toString());
+			}
+		}
+		return set;
+	}
+
+	@ManagedAttribute
+	@Description("Returns the connected addresses.")
+	public Set<String> getConnectedAddresses() {
+		Set<String> set = new HashSet<String>();
+		Set<SocketAddress> connSet = connectManager.getConnectedAddress();
+		if (connSet != null) {
+			for (SocketAddress add : connSet) {
+				set.add(add.toString());
+			}
+		}
+		return set;
+	}
+
+	@ManagedAttribute
+	@Description("Returns the lastest 20 times reconnect addresses.")
+	public Map<String, String> getReconnectInfo() {
+		Queue<ConnectionInfo> queue = connectManager.getReconnectionInfoQueue();
+		//
+		Object[] array = queue.toArray();
+		Map<String, String> map = new LinkedHashMap<String, String>();
+		for (int i = array.length - 1; i >= 0; --i) {
+			ConnectionInfo connInfo = (ConnectionInfo) array[i];
+			map.put(connInfo.getTime(), connInfo.getAddress());
+		}
+		return map;
 	}
 
 	/**
