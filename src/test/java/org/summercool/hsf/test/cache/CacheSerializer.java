@@ -1,5 +1,6 @@
 package org.summercool.hsf.test.cache;
 
+import org.apache.commons.lang.ObjectUtils.Null;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferFactory;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -25,6 +26,8 @@ public class CacheSerializer implements Serializer {
 	private Serializer serializer = new KryoSerializer();
 
 	private ChannelBufferFactory bufferFactory = HeapChannelBufferFactory.getInstance();
+
+	private static final byte[] NULL = new byte[4];
 
 	@Override
 	public void init() throws Exception {
@@ -65,6 +68,10 @@ public class CacheSerializer implements Serializer {
 		if (noError) {
 			if (msg.getTarget() != null) {
 				byte[] bTarget = serializer.serialize(msg.getTarget());
+				ob.writeInt(bTarget.length);
+				ob.writeBytes(bTarget);
+			} else { // 如果返回值为null，则走下面这段逻辑，之前没有处理所以会有bug
+				byte[] bTarget = new byte[4];
 				ob.writeInt(bTarget.length);
 				ob.writeBytes(bTarget);
 			}
@@ -174,7 +181,9 @@ public class CacheSerializer implements Serializer {
 		if (length > 0) {
 			byte[] bytes = buffer.readBytes(length).array();
 			if (0 == markNoError) {
-				msg.setTarget(serializer.deserialize(bytes));
+				if (!(bytes.length == 4 && bytes[0] == NULL[0] && bytes[1] == NULL[1] && bytes[2] == NULL[2] && bytes[3] == NULL[3])) {
+					msg.setTarget(serializer.deserialize(bytes));
+				}
 			} else {
 				msg.setCauseMessage(LangUtil.toString(serializer.deserialize(bytes)));
 			}

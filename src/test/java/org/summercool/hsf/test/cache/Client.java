@@ -15,7 +15,7 @@ import org.summercool.hsf.proxy.ServiceProxyFactory;
 
 public class Client {
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
-		CacheClient cacheClient = new CacheClient("192.168.1.26:8082");
+		CacheClient cacheClient = new CacheClient("127.0.0.1:8082");
 		System.out.println(cacheClient.get("name"));
 		cacheClient.set("name", "kolor");
 		System.out.println(cacheClient.get("name"));
