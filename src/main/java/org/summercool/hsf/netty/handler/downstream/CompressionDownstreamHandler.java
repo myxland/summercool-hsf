@@ -37,9 +37,11 @@ public class CompressionDownstreamHandler implements ChannelDownstreamHandler {
 			int length = resBuffer.length;
 			byte[] bytes = new byte[length + 1];
 			bytes[0] = compressionResult.isCompressed() ? (byte) 1 : (byte) 0;
-			for (int i = 0; i < length; i++) {
-				bytes[i + 1] = resBuffer[i];
-			}
+//			for (int i = 0; i < length; i++) {
+//				bytes[i + 1] = resBuffer[i];
+//			}
+			// 提高内存拷备性能，未来要减少一次内存拷备及序列化线程优化
+			System.arraycopy(resBuffer, 0, bytes, 1, length);
 
 			DownstreamMessageEvent evt = new DownstreamMessageEvent(event.getChannel(), event.getFuture(), bytes,
 					event.getRemoteAddress());
