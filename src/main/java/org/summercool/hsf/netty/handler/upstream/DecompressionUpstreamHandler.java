@@ -28,7 +28,7 @@ public class DecompressionUpstreamHandler extends SimpleChannelUpstreamHandler {
 //				for (int i = 1; i < length; i++) {
 //					buffer[i - 1] = bytes[i];
 //				}
-				System.arraycopy(bytes, 1, buffer, 0, length);
+				System.arraycopy(bytes, 1, buffer, 0, length - 1);
 
 				if (bytes[0] == 1) {
 					buffer = compressionStrategy.decompress(buffer);
