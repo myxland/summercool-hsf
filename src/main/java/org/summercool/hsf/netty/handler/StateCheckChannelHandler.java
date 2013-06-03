@@ -56,8 +56,7 @@ public class StateCheckChannelHandler extends IdleStateAwareChannelHandler {
 					synchronized (channelGroup) {
 						channelGroup = hsfService.getGroups().get(channelGroup.getName());
 						if (channelGroup != null && channelGroup.isEmpty()) {
-							hsfService.getEventDispatcher().dispatchGroupRemovedEvent(ctx, hsfChannel,
-									channelGroup.getName());
+							hsfService.getEventDispatcher().dispatchGroupRemovedEvent(ctx, hsfChannel, channelGroup.getName());
 						}
 					}
 				}

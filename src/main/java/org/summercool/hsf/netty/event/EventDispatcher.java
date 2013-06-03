@@ -103,8 +103,7 @@ public class EventDispatcher {
 						//
 						if (interceptor.canIntercept(e.getMessage()) && !interceptor.intercept(this, e.getMessage())) {
 							// 直接返回调用方
-							returnWithException(e.getMessage(), new HsfInterceptedException("intercepted by "
-									+ interceptor.getClass()), channel);
+							returnWithException(e.getMessage(), new HsfInterceptedException("intercepted by " + interceptor.getClass()), channel);
 							return;
 						}
 					}
@@ -123,13 +122,11 @@ public class EventDispatcher {
 						// 为当前线程添加Channel
 						HsfContextHolder.setChannel(channel);
 						HsfContextHolder.setHsfService(service);
-						HsfContextHolder.setRemoteGroupName(channel.getChannelGroup() != null ? channel
-								.getChannelGroup().getName() : null);
+						HsfContextHolder.setRemoteGroupName(channel.getChannelGroup() != null ? channel.getChannelGroup().getName() : null);
 
 						for (EventListener listener : service.getListeners()) {
 							if (listener instanceof MessageEventListener) {
-								EventBehavior eventBehavior = ((MessageEventListener) listener).messageReceived(ctx,
-										channel, e);
+								EventBehavior eventBehavior = ((MessageEventListener) listener).messageReceived(ctx, channel, e);
 								if (EventBehavior.Break.equals(eventBehavior)) {
 									break;
 								}
@@ -368,8 +365,7 @@ public class EventDispatcher {
 
 	public void setMaximumPoolSize(int maximumPoolSize) {
 		if (maximumPoolSize < Runtime.getRuntime().availableProcessors() + 1) {
-			throw new IllegalArgumentException("maximumPoolSize must great than "
-					+ Runtime.getRuntime().availableProcessors());
+			throw new IllegalArgumentException("maximumPoolSize must great than " + Runtime.getRuntime().availableProcessors());
 		}
 
 		if (this.maximumPoolSize != maximumPoolSize) {

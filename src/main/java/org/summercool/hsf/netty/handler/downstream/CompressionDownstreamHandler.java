@@ -43,8 +43,7 @@ public class CompressionDownstreamHandler implements ChannelDownstreamHandler {
 			// 提高内存拷备性能，未来要减少一次内存拷备及序列化线程优化
 			System.arraycopy(resBuffer, 0, bytes, 1, length);
 
-			DownstreamMessageEvent evt = new DownstreamMessageEvent(event.getChannel(), event.getFuture(), bytes,
-					event.getRemoteAddress());
+			DownstreamMessageEvent evt = new DownstreamMessageEvent(event.getChannel(), event.getFuture(), bytes, event.getRemoteAddress());
 
 			ctx.sendDownstream(evt);
 		} else {
